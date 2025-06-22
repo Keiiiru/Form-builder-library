@@ -3,10 +3,37 @@
     <label class="label">{{ field.label }}</label>
 
     <!-- Text field -->
-    <input type="text" v-if="field.fieldType === 'text'" v-model="value" />
+    <input
+      type="text"
+      v-if="field.fieldType === 'text'"
+      v-model="value"
+      :placeholder="field.placeholder"
+    />
 
     <!-- Number filed -->
-    <input type="number" v-if="field.fieldType === 'number'" v-model="value" />
+    <input
+      type="number"
+      v-if="field.fieldType === 'number'"
+      v-model="value"
+      :placeholder="field.placeholder"
+    />
+
+    <!-- Selector field -->
+    <select v-if="field.fieldType === 'selector'" v-model="value">
+      <option v-for="option in field.options" :value="option">
+        {{ option }}
+      </option>
+    </select>
+
+    <input
+      type="checkbox"
+      :name="field.name"
+      :id="field.name"
+      v-model="value"
+      v-if="field.fieldType === 'checkBox'"
+    />
+
+    <p v-if="error" class="error-text">{{ error }}</p>
   </div>
 </template>
 
@@ -17,6 +44,7 @@ import type { formField } from "@/lib/core/types";
 const props = defineProps<{
   field: formField;
   modelValue: any;
+  error: string | null;
 }>();
 
 const emit = defineEmits(["update:modelValue"]);

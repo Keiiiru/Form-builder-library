@@ -14,6 +14,12 @@ export function useForm(schema: formField[]) {
       case "text":
         formData.value[field.name] = "";
         break;
+      case "selector":
+        formData.value[field.name] = "Select";
+        break;
+      case "checkBox":
+        formData.value[field.name] = false;
+        break;
       default:
         formData.value[field.name] = "";
     }
