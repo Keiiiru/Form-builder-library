@@ -1,0 +1,43 @@
+{
+  "name": "vue-form-builder",
+  "version": "0.1.0",
+  "private": true,
+  "description": "",
+  "license": "ISC",
+  "author": "",
+  "type": "module",
+  "exports": {
+    ".": {
+      "import": "./dist/vue-form-builder.es.js",
+      "require": "./dist/vue-form-builder.umd.js"
+    }
+  },
+  "main": "./dist/vue-form-builder.umd.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "build:demo": "vite build --mode demo",
+    "preview": "vite preview",
+    "prepublish": "npm run build"
+  },
+  "dependencies": {
+    "vite-plugin-dts": "^4.5.4",
+    "vue": "^3.5.13"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.3",
+    "@vitejs/plugin-vue": "^5.2.3",
+    "@vue/tsconfig": "^0.7.0",
+    "typescript": "~5.8.3",
+    "vite": "^6.3.5",
+    "vue-tsc": "^2.2.8"
+  },
+  "peerDependencies": {
+    "vue": "^3.3.0"
+  },
+  "module": "./dist/vue-form-builder.es.js"
+}
