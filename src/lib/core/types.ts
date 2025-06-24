@@ -1,4 +1,4 @@
-type fieldTypes = "text" | "number" | "selector" | "checkBox";
+type fieldTypes = "text" | "number" | "selector" | "checkBox" | "unknown";
 
 export interface formField {
   fieldType: fieldTypes;

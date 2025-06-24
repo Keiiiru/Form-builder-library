@@ -6,7 +6,6 @@
 </template>
 
 <script setup lang="ts">
-import { Ref } from "vue";
 import type { formField } from "../lib/core";
 import FormBuilder from "../lib/vue";
 

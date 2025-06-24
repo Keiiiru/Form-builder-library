@@ -4,6 +4,7 @@
 
     <!-- Text field -->
     <input
+      :name="field.name"
       type="text"
       v-if="field.fieldType === 'text'"
       v-model="value"
@@ -12,6 +13,7 @@
 
     <!-- Number filed -->
     <input
+      :name="field.name"
       type="number"
       v-if="field.fieldType === 'number'"
       v-model="value"
@@ -19,7 +21,11 @@
     />
 
     <!-- Selector field -->
-    <select v-if="field.fieldType === 'selector'" v-model="value">
+    <select
+      v-if="field.fieldType === 'selector'"
+      v-model="value"
+      :name="field.name"
+    >
       <option v-for="option in field.options" :value="option">
         {{ option }}
       </option>
