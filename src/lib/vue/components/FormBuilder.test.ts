@@ -1,7 +1,7 @@
 import { expect, describe, it, vi, type Mock } from "vitest";
 import { mount } from "@vue/test-utils";
 import FormBuilder from "./FormBuilder.vue";
-import { formField } from "@/lib/core";
+import { formField } from "@/lib/core/model";
 import * as hooks from "@/lib/vue/composables/useForm";
 import { nextTick, ref } from "vue";
 

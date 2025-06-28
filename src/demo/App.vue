@@ -6,7 +6,8 @@
 </template>
 
 <script setup lang="ts">
-import type { formField } from "../lib/core";
+import { SchemaBuilder } from "@/lib/core/utils/schema-builder";
+import type { FormField } from "../lib/core/model";
 import FormBuilder from "../lib/vue";
 
 const usernameValidator = (value: string): string | null => {
@@ -17,33 +18,28 @@ const usernameValidator = (value: string): string | null => {
   }
 };
 
-const formSchema: formField[] = [
-  {
+const formSchema = new SchemaBuilder()
+  .text({
     name: "username",
     label: "Username",
-    fieldType: "text",
     placeholder: "Type username",
     validator: usernameValidator,
-  },
-  {
+  })
+  .number({
     name: "age",
     label: "age",
-    fieldType: "number",
     placeholder: "Type age",
-  },
-  {
+  })
+  .selector({
     name: "gender",
     label: "gender",
-    fieldType: "selector",
     options: ["male", "female"],
-    placeholder: "choose gender",
-  },
-  {
+  })
+  .checkbox({
     name: "agree",
     label: "agree policy privacy",
-    fieldType: "checkBox",
-  },
-];
+  })
+  .build();
 
 const submit = (formData: Record<string, any>) => {
   console.log(JSON.stringify(formData));

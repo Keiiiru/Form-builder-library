@@ -1,8 +1,8 @@
-import { formField } from "@/lib/core/types";
+import { FormField } from "@/lib/core/model";
 import { expect, describe, it } from "vitest";
 import { useForm } from "./useForm";
 
-const formSchema: formField[] = [
+const formSchema: FormField[] = [
   {
     name: "username",
     label: "Username",

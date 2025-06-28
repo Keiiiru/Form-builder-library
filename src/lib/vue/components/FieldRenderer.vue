@@ -45,7 +45,7 @@
 
 <script setup lang="ts">
 import { computed } from "vue";
-import type { formField } from "@/lib/core/types";
+import type { formField } from "@/lib/core/model";
 
 const props = defineProps<{
   field: formField;

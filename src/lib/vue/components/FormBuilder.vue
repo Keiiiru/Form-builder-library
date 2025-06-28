@@ -14,13 +14,13 @@
 </template>
 
 <script setup lang="ts">
-import type { formField } from "@/lib/core/types";
+import type { FormField } from "@/lib/core/model";
 import { useForm } from "@/lib/vue/composables/useForm";
 import FieldRenderer from "./FieldRenderer.vue";
 import { Ref, ref } from "vue";
 
 const props = defineProps<{
-  schema: formField[];
+  schema: FormField[];
   submitForm: (payload: Record<string, any>) => void;
 }>();
 

@@ -1,29 +1,10 @@
 import { ref } from "vue";
-import type { formField } from "@/lib/core/types";
+import type { FormField } from "@/lib/core/model";
+import { initForm } from "@/lib/core/utils/init-form";
 
-export function useForm(schema: formField[]) {
+export function useForm(schema: FormField[]) {
   // Define form data record
-  const formData = ref<Record<string, any>>({});
-
-  // Define default values
-  schema.forEach((field) => {
-    switch (field.fieldType) {
-      case "number":
-        formData.value[field.name] = 0;
-        break;
-      case "text":
-        formData.value[field.name] = "";
-        break;
-      case "selector":
-        formData.value[field.name] = "Select";
-        break;
-      case "checkBox":
-        formData.value[field.name] = false;
-        break;
-      default:
-        formData.value[field.name] = "";
-    }
-  });
+  const formData = ref<Record<string, any>>(initForm(schema));
 
   return { formData };
 }
