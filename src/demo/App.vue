@@ -7,7 +7,6 @@
 
 <script setup lang="ts">
 import { SchemaBuilder } from "@/lib/core/utils/schema-builder";
-import type { FormField } from "../lib/core/model";
 import FormBuilder from "../lib/vue";
 
 const usernameValidator = (value: string): string | null => {
