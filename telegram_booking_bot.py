@@ -36,18 +36,54 @@ openai.api_key = OPENAI_API_KEY
 SCOPES = ['https://www.googleapis.com/auth/calendar']
 MOSCOW_TZ = pytz.timezone('Europe/Moscow')
 
-try:
-    credentials = service_account.Credentials.from_service_account_file(
-        GOOGLE_CREDENTIALS_FILE, scopes=SCOPES
-    )
-    service = build('calendar', 'v3', credentials=credentials)
-    print("Google Calendar API успешно инициализирован")
-except FileNotFoundError:
-    print(f"Файл учетных данных {GOOGLE_CREDENTIALS_FILE} не найден")
-    service = None
-except Exception as e:
-    print(f"Ошибка инициализации Google Calendar API: {e}")
-    service = None
+def initialize_calendar_service():
+    """Инициализация Google Calendar сервиса с детальной диагностикой"""
+    try:
+        print(f"🔍 Попытка загрузки файла учетных данных: {GOOGLE_CREDENTIALS_FILE}")
+        
+        if not os.path.exists(GOOGLE_CREDENTIALS_FILE):
+            print(f"❌ Файл {GOOGLE_CREDENTIALS_FILE} не найден в текущей директории")
+            print(f"📁 Текущая директория: {os.getcwd()}")
+            print(f"📄 Файлы в директории: {os.listdir('.')}")
+            return None
+            
+        credentials = service_account.Credentials.from_service_account_file(
+            GOOGLE_CREDENTIALS_FILE, scopes=SCOPES
+        )
+        
+        service = build('calendar', 'v3', credentials=credentials)
+        
+        # Тестируем подключение
+        try:
+            calendar_list = service.calendarList().list().execute()
+            calendars = calendar_list.get('items', [])
+            print(f"✅ Google Calendar API успешно инициализирован")
+            print(f"📅 Найдено календарей: {len(calendars)}")
+            
+            for calendar in calendars:
+                cal_id = calendar['id']
+                cal_name = calendar.get('summary', 'Без названия')
+                access_role = calendar.get('accessRole', 'неизвестно')
+                print(f"  📋 {cal_name} (ID: {cal_id[:20]}...) - Права: {access_role}")
+                
+                if cal_id == CALENDAR_ID or CALENDAR_ID == "primary":
+                    print(f"  🎯 Используется календарь: {cal_name}")
+            
+            return service
+            
+        except Exception as test_error:
+            print(f"❌ Ошибка при тестировании подключения: {test_error}")
+            return None
+            
+    except FileNotFoundError:
+        print(f"❌ Файл учетных данных {GOOGLE_CREDENTIALS_FILE} не найден")
+        return None
+    except Exception as e:
+        print(f"❌ Ошибка инициализации Google Calendar API: {e}")
+        print(f"🔍 Тип ошибки: {type(e).__name__}")
+        return None
+
+service = initialize_calendar_service()
 
 # --- Хранилище выбранных дат ---
 user_dates: Dict[int, datetime.date] = {}
@@ -276,14 +312,44 @@ async def book_slot(message: types.Message):
             'reminders': {
                 'useDefault': False,
                 'overrides': [
-                    {'method': 'email', 'minutes': 24 * 60},  # За 24 часа
                     {'method': 'popup', 'minutes': 30},       # За 30 минут
                 ],
             },
         }
         
+        print(f"🔍 Создание события в календаре:")
+        print(f"  📅 Календарь ID: {CALENDAR_ID}")
+        print(f"  📝 Название: {event['summary']}")
+        print(f"  🕐 Начало: {start_datetime.isoformat()}")
+        print(f"  🕑 Конец: {end_datetime.isoformat()}")
+        print(f"  👤 Пользователь: {user_name} (ID: {user_id})")
+        
         # Добавляем событие в календарь
-        created_event = service.events().insert(calendarId=CALENDAR_ID, body=event).execute()
+        try:
+            created_event = service.events().insert(calendarId=CALENDAR_ID, body=event).execute()
+            event_id = created_event.get('id')
+            event_link = created_event.get('htmlLink', 'Ссылка недоступна')
+            
+            print(f"✅ Событие успешно создано!")
+            print(f"  🆔 ID события: {event_id}")
+            print(f"  🔗 Ссылка: {event_link}")
+            
+        except HttpError as http_error:
+            error_details = http_error.error_details if hasattr(http_error, 'error_details') else str(http_error)
+            print(f"❌ HTTP ошибка при создании события: {http_error}")
+            print(f"🔍 Детали ошибки: {error_details}")
+            
+            # Пробуем создать событие в основном календаре пользователя
+            if CALENDAR_ID != "primary":
+                print(f"🔄 Попытка создания в основном календаре...")
+                try:
+                    created_event = service.events().insert(calendarId="primary", body=event).execute()
+                    print(f"✅ Событие создано в основном календаре: {created_event.get('id')}")
+                except Exception as fallback_error:
+                    print(f"❌ Не удалось создать событие и в основном календаре: {fallback_error}")
+                    raise http_error
+            else:
+                raise http_error
         
         # Удаляем пользователя из хранилища дат
         if user_id in user_dates:
@@ -404,6 +470,57 @@ async def chat_with_openai(message: types.Message):
             "Для записи на прием используйте команду /start"
         )
 
+# --- Тестирование календаря ---
+@dp.message(Command("test_calendar"))
+async def test_calendar(message: types.Message):
+    """Тестирование подключения к Google Calendar"""
+    if not service:
+        await message.reply("❌ Google Calendar API не инициализирован")
+        return
+    
+    try:
+        # Создаем тестовое событие
+        now = datetime.datetime.now(MOSCOW_TZ)
+        test_start = now + datetime.timedelta(minutes=1)
+        test_end = test_start + datetime.timedelta(minutes=5)
+        
+        test_event = {
+            'summary': 'ТЕСТ - Проверка подключения',
+            'description': f'Тестовое событие от Telegram бота\nСоздано: {now.strftime("%d.%m.%Y %H:%M")}',
+            'start': {
+                'dateTime': test_start.isoformat(),
+                'timeZone': 'Europe/Moscow'
+            },
+            'end': {
+                'dateTime': test_end.isoformat(),
+                'timeZone': 'Europe/Moscow'
+            },
+        }
+        
+        # Создаем событие
+        created_event = service.events().insert(calendarId=CALENDAR_ID, body=test_event).execute()
+        event_id = created_event.get('id')
+        
+        # Сразу удаляем тестовое событие
+        service.events().delete(calendarId=CALENDAR_ID, eventId=event_id).execute()
+        
+        await message.reply(
+            f"✅ Тест успешно пройден!\n"
+            f"📅 Календарь ID: {CALENDAR_ID}\n"
+            f"🆔 Тестовое событие создано и удалено: {event_id[:20]}...\n"
+            f"🔗 Подключение к Google Calendar работает корректно!"
+        )
+        
+    except HttpError as error:
+        await message.reply(
+            f"❌ Ошибка Google Calendar API:\n"
+            f"Код: {error.resp.status}\n"
+            f"Причина: {error.resp.reason}\n"
+            f"Детали: {error.content.decode() if error.content else 'Нет деталей'}"
+        )
+    except Exception as e:
+        await message.reply(f"❌ Неожиданная ошибка при тестировании: {e}")
+
 # --- Обработчик команды помощи ---
 @dp.message(Command("help"))
 async def help_command(message: types.Message):
@@ -412,6 +529,7 @@ async def help_command(message: types.Message):
         "🤖 Доступные команды:\n\n"
         "/start - Начать запись на прием\n"
         "/my_bookings - Посмотреть ваши записи\n"
+        "/test_calendar - Тестировать Google Calendar\n"
         "/help - Показать эту справку\n\n"
         "📝 Как записаться:\n"
         "1. Используйте /start\n"
