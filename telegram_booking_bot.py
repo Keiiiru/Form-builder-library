@@ -1,16 +1,56 @@
 import os
+import sys
 import datetime
 import asyncio
 import pytz
 from typing import Dict, List
-from aiogram import Bot, Dispatcher, types
-from aiogram.types import ReplyKeyboardMarkup, KeyboardButton, ReplyKeyboardRemove
-from aiogram.filters import Command
-from google.oauth2 import service_account
-from googleapiclient.discovery import build
-from googleapiclient.errors import HttpError
-from dotenv import load_dotenv
-import openai
+
+# Проверяем наличие конфликтующих файлов перед импортом
+def check_module_conflicts():
+    """Проверка конфликтов имен модулей"""
+    conflicts = []
+    current_dir = os.getcwd()
+    
+    # Список стандартных модулей Python, которые часто конфликтуют
+    standard_modules = ['calendar', 'datetime', 'json', 'os', 'sys', 'time', 'email', 'asyncio']
+    
+    for module in standard_modules:
+        conflict_file = os.path.join(current_dir, f"{module}.py")
+        if os.path.exists(conflict_file):
+            conflicts.append(f"{module}.py")
+    
+    if conflicts:
+        print("⚠️ ВНИМАНИЕ: Обнаружены конфликты имен модулей!")
+        print("Следующие файлы конфликтуют со стандартными модулями Python:")
+        for conflict in conflicts:
+            print(f"   📄 {conflict}")
+        print("\n💡 Решение:")
+        print("   Переименуйте эти файлы, например:")
+        for conflict in conflicts:
+            new_name = conflict.replace('.py', '_custom.py')
+            print(f"   mv {conflict} {new_name}")
+        print("\n❌ Бот не может запуститься из-за конфликтов модулей.")
+        return True
+    return False
+
+# Проверяем конфликты
+if check_module_conflicts():
+    sys.exit(1)
+
+# Импортируем остальные модули
+try:
+    from aiogram import Bot, Dispatcher, types
+    from aiogram.types import ReplyKeyboardMarkup, KeyboardButton, ReplyKeyboardRemove
+    from aiogram.filters import Command
+    from google.oauth2 import service_account
+    from googleapiclient.discovery import build
+    from googleapiclient.errors import HttpError
+    from dotenv import load_dotenv
+    import openai
+except ImportError as e:
+    print(f"❌ Ошибка импорта библиотек: {e}")
+    print("💡 Установите зависимости: pip install -r requirements.txt")
+    sys.exit(1)
 
 load_dotenv()
 

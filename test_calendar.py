@@ -5,11 +5,54 @@
 """
 
 import os
+import sys
 import datetime
 import pytz
-from google.oauth2 import service_account
-from googleapiclient.discovery import build
-from googleapiclient.errors import HttpError
+
+# Проверяем наличие конфликтующих файлов
+def check_module_conflicts():
+    """Проверка конфликтов имен модулей"""
+    conflicts = []
+    current_dir = os.getcwd()
+    
+    # Список стандартных модулей Python, которые часто конфликтуют
+    standard_modules = ['calendar', 'datetime', 'json', 'os', 'sys', 'time', 'email']
+    
+    for module in standard_modules:
+        conflict_file = os.path.join(current_dir, f"{module}.py")
+        if os.path.exists(conflict_file):
+            conflicts.append(f"{module}.py")
+    
+    if conflicts:
+        print("⚠️ ВНИМАНИЕ: Обнаружены конфликты имен модулей!")
+        print("Следующие файлы конфликтуют со стандартными модулями Python:")
+        for conflict in conflicts:
+            print(f"   📄 {conflict}")
+        print("\n💡 Решение:")
+        print("   Переименуйте эти файлы, например:")
+        for conflict in conflicts:
+            new_name = conflict.replace('.py', '_custom.py')
+            print(f"   mv {conflict} {new_name}")
+        print()
+        return conflicts
+    return []
+
+# Проверяем конфликты перед импортом
+conflicts = check_module_conflicts()
+if conflicts:
+    print("❌ Невозможно продолжить из-за конфликтов модулей.")
+    print("Переименуйте указанные файлы и запустите скрипт снова.")
+    sys.exit(1)
+
+# Теперь безопасно импортируем модули Google API
+try:
+    from google.oauth2 import service_account
+    from googleapiclient.discovery import build
+    from googleapiclient.errors import HttpError
+except ImportError as e:
+    print(f"❌ Ошибка импорта Google API библиотек: {e}")
+    print("💡 Установите зависимости: pip install -r requirements.txt")
+    sys.exit(1)
 
 # Настройки
 GOOGLE_CREDENTIALS_FILE = "aura-469414-e8af117aeedf.json"
